@@ -69,7 +69,8 @@ export const confirmEmail = async (req: Request, res: Response) => {
   try {
 
     const { otp } = req.body
-    const getData = await client.get(`otp:${otp}`);
+    const otpLower = otp.toLowerCase();
+    const getData = await client.get(`otp:${otpLower}`);
 
     if(!getData) {
       return res.status(400).json({
@@ -127,8 +128,8 @@ export const login = async (req: Request, res: Response) => {
       httpOnly: true,
       maxAge: 30 * 24 * 60 * 60 * 1000,
       secure: String(process.env.ENVIROIMENT) == "dev" ? false : true,
-      sameSite: "none",
-     partitioned: true
+      sameSite: "lax",
+      //partitioned: true
     });
 
     res.status(200).json({
