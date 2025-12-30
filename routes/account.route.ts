@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { confirmEmail, createAccount, login, logout, profileUser } from "../controllers/account.controller";
+import { changePassword, confirmEmail, createAccount, login, logout, profileUser } from "../controllers/account.controller";
 import { createAccountValidate, loginValidate } from "../validates/account.validate";
 import { accountMiddleware } from "../middlewares/account.middleware";
 const router = Router();
@@ -14,5 +14,6 @@ router.get("/logout", logout);
 
 router.get("/profile", accountMiddleware, profileUser);
 
+router.put("/change/password", accountMiddleware, changePassword);
 
 export default router;

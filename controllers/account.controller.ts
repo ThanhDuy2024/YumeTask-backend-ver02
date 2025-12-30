@@ -188,3 +188,51 @@ export const profileUser = async (req: users, res: Response) => {
     })
   }
 }
+
+export const changePassword = async (req: users, res: Response) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+
+    const user = await Account.findOne({
+      _id: req.users.id
+    });
+
+    if(!user) {
+      return res.status(404).json({
+        code: "error",
+        message: "User not found!"
+      })
+    };
+
+    const hash = user.password;
+
+    const checkPassword = bcrypt.compareSync(oldPassword, String(hash));
+
+    if(!checkPassword) {
+      return res.status(400).json({
+        code: "error",
+        message: "Your old password are not correct"
+      });
+    };
+
+    const salt = bcrypt.genSaltSync(10);
+    const newHashPassword = bcrypt.hashSync(newPassword, salt);
+
+    await user.updateOne({
+      password: newHashPassword
+    });
+
+    user.save();
+
+    res.json({
+      code: "success",
+      message: "Change password completed"
+    })
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      code: "error",
+      message: "Change password error"
+    })
+  }
+}
