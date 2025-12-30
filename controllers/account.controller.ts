@@ -172,6 +172,7 @@ export const profileUser = async (req: users, res: Response) => {
       id: id,
       userName: userName,
       email: email,
+      image: "",
       createdAt: createdAtFormat,
       updatedAt: updatedAtFormat
     }
