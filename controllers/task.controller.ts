@@ -5,6 +5,7 @@ import moment from "moment";
 import { statusArray } from "../config/variable.config";
 import { paginationHelper } from "../helpers/pagination.helper";
 import slugify from "slugify";
+import dayjs from "dayjs";
 export const createTask = async (req: users, res: Response ) => {
   try {
     const task: any = req.body;
@@ -36,12 +37,12 @@ const skip = 0;
 export const taskList = async (req: users, res: Response) => {
   try {
 
-    const {search, status, page, limit } = req.query;
-
+    const {search, status, time, page, limit } = req.query;
     const findTask:any = {
       userId: req.users.id,
     };
 
+    //tim kiem nhiem vu
     if(search && String(search).trim() !== "" && String(search).trim() !== '""') {
       const keyword = slugify(String(search), {
         lower: true
@@ -52,16 +53,36 @@ export const taskList = async (req: users, res: Response) => {
       findTask.slug = regex;
     }
 
-    if(statusArray.includes(String(status))) {
+    //Loc nhiem vu theo trang thai
+    if(statusArray.includes(String(status)) && status && String(status).trim() !== "" && String(status).trim() !== '""') {
       findTask.status = status;
     };
+
+    //Loc theo ngay, thang, nam
+    if(time && time !== "all") {
+      let startDate
+      let endDate = dayjs().endOf('day').toDate(); //cuoi ngay hom nay
+
+      if(time === "today") {
+        startDate = dayjs().startOf('day').toDate(); //bat dau ngay
+      } else if(time === "week") {
+        startDate = dayjs().startOf('week').toDate(); //Ngay bat dau cua tuan
+      } else if (time === "month") {
+        startDate = dayjs().startOf('month').toDate(); //Ngay bat dau cua thang
+      }
+
+      findTask.createdAt = {
+        $gte: startDate,
+        $lte: endDate
+      }
+    }
 
     const totalTask:number = await Task.countDocuments(findTask);
     const pagination = paginationHelper(Number(page), Number(skip), Number(limit), totalTask);
 
     const list = await Task.find(findTask).sort({
       createdAt: "desc"
-    });
+    }).limit(Number(limit)).skip(pagination.skip);
 
     const finalData:Array<object> = [];
     for (const item of list) {
@@ -94,6 +115,47 @@ export const taskList = async (req: users, res: Response) => {
     })
   }
 };
+
+export const getAllTask = async (req: users, res: Response) => {
+  try {
+    const find:any = {
+      userId: req.users.id
+    }
+
+    const data:Array<object> = [];
+    const tasks = await Task.find(find);
+
+    for (const item of tasks) {
+      const rawData:any = {
+        id: item._id,
+        userId: item.userId,
+        taskContent: item.taskContent,
+        status: item.status,
+        taskNote: item.taskNote,
+        startTime: item.startTime,
+        endTime: item.endTime,
+        dateTime: item.dateTime,
+        createdAt: "",
+        updatedAt: "" 
+      }
+
+      rawData.createdAt = moment(item.createdAt).format("HH:mm DD/MM/YYYY");
+      rawData.updatedAt = moment(item.updatedAt).format("HH:mm DD/MM/YYYY");
+
+      data.push(rawData);
+    }
+    
+    res.json({
+      code: "success",
+      data: data
+    })
+  } catch (error) {
+    res.status(400).json({
+      code: "error",
+      message: "Lay task ko thanh cong"
+    })
+  }
+}
 
 export const updateTask = async (req: users, res: Response) => {
   try {
@@ -175,5 +237,35 @@ export const updateStatusTask = async (req: users, res: Response) => {
     })
   } catch (error) {
     console.log(error);
+  }
+}
+
+export const updateTaskAdvan = async (req: users, res: Response) => {
+  try {
+    const task = await Task.findOne({
+      userId: req.users.id,
+      _id: req.params.id
+    });
+
+    if(!task) {
+      return res.status(404).json({
+        code: "success",
+        message: "Task not found"
+      })
+    };
+
+    await task.updateOne(req.body);
+    task.save();
+
+    res.json({
+      code: "success",
+      message: "update task ok!"
+    })
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      code: "error",
+      message: "update task error"
+    })
   }
 }
