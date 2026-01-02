@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createTask, deleteTask, getAllTask, taskList, updateStatusTask, updateTask, updateTaskAdvan } from "../controllers/task.controller";
+import { createTask, createTaskAdvan, deleteTask, getAllTask, taskList, updateStatusTask, updateTask, updateTaskAdvan } from "../controllers/task.controller";
 import { taskValidate } from "../validates/task.validate";
 
 const router = Router();
@@ -17,4 +17,6 @@ router.put("/update/status/:id", updateStatusTask);
 router.get("/all/list", getAllTask);
 
 router.put("/update/advan/:id", updateTaskAdvan);
+
+router.post("/create/advan", createTaskAdvan);
 export default router;
